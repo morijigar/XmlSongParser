@@ -8,8 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.apifetch.base.BaseActivity
 import com.example.apifetch.model.Entry
-import com.example.apifetch.model.FeedXml
-import com.example.apifetch.model.MoviesList
 import com.example.myapplication.databse.Database
 import com.example.myapplication.ws.Repository
 import kotlinx.coroutines.launch
@@ -22,7 +20,7 @@ class MainActivityViewModel : ViewModel() {
     private val repository: Repository = Repository()
 
     var listData = MutableLiveData<MutableList<Entry>>()
-    var progressVisibility:MutableLiveData<Int> = MutableLiveData(View.GONE)
+    var progressVisibility: MutableLiveData<Int> = MutableLiveData(View.GONE)
 
     fun callTopSongs() {
         viewModelScope.launch {
@@ -61,18 +59,29 @@ class MainActivityViewModel : ViewModel() {
 
     }
 
-    fun getDataFromLocal(context: Context){
+    fun getDataFromLocal(context: Context) {
         viewModelScope.launch {
             val dataList = Database.getInstance(context).appDatabase.feedsDao().getAllData()
             listData.postValue(dataList)
         }
     }
 
-    fun getDataForRecycleView(baseActivity: BaseActivity<*,*>){
+    fun getDataIfOnlineElseOffline(baseActivity: BaseActivity<*, *>) {
         if (baseActivity.isOnline()) {
             callTop20Songs(baseActivity)
-        }else{
+        } else {
             getDataFromLocal(baseActivity)
+        }
+    }
+
+    fun getDataForRecycleView(baseActivity: BaseActivity<*, *>) {
+        viewModelScope.launch {
+            val dataList = Database.getInstance(baseActivity).appDatabase.feedsDao().getAllData()
+            if (dataList.size > 0) {
+                listData.postValue(dataList)
+            } else {
+                callTop20Songs(baseActivity)
+            }
         }
     }
 
